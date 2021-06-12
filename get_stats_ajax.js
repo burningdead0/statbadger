@@ -7,6 +7,8 @@
 // @match        https://w23.crownofthegods.com/
 // @icon
 // @grant        none
+// @updateURL   https://raw.githubusercontent.com/burningdead0/statbadger/master/get_stats_axaj.js
+// @downloadURL https://raw.githubusercontent.com/burningdead0/statbadger/master/get_stats_axaj.js
 // ==/UserScript==
 //[common]
 (function () {
