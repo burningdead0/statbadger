@@ -52,7 +52,7 @@ function getCookie(cname) {
 */
 //start of time, window to try (hours) andmaximum tries
 const WorkConfig = {
-    WorldsInUse: [1,2,3,4,5,23,29,30,31,32],
+    WorldsInUse: [23],
     StartTime: {hour: 17, min: 0, sec: 0},
     NumHours: 1,
     MaxTries: 5
