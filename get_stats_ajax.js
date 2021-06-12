@@ -532,10 +532,11 @@ function getMemberStatsClick()
     allianceStatsToCsv();
 }
 /////////////////////////////////////////////////
-const  ActionQueueOrder = {
+const ActionQueueOrder = {
     Sequential: "sequential",
     Prereq: "prereq"
-}
+}; Object.freeze(ActionQueueOrder);
+
 const ActionItemState = {
     Idle: "idle",
     Running: "running",
@@ -565,7 +566,7 @@ class ActionArgs {
         this.timeoutId = timeoutId;
     }
     next() {
-        actionQueue.next(this);
+        this.actionQueue.next(this);
     }
 }
 
@@ -589,7 +590,7 @@ class ActionQueue extends Array {
     static actionTimeoutHandler(actionArgs) {
         let q = actionArgs.actionQueue;
         let action = ActionQueue.getActionById(actionArgs.id);
-        action.state = ActionState.Timeout;
+        action.state = ActionItemState.Timeout;
         actionArgs.timeoutId = null;
         q.next(actionArgs);
     }
@@ -607,7 +608,7 @@ class ActionQueue extends Array {
     performAction(action) {
         if ( action.state == ActionItemState.Idle ) {
             this.setState(ActionQueueState.Running);
-            args = new ActionArgs(this,action.id);
+            let args = new ActionArgs(this,action.id);
             action.state = ActionItemState.Running;
             setTimeout(action.fn, 1, args);
             args.timeoutId = (action.timeout > 0) ? setTimeout(ActionQueue.actionTimeoutHandler,action.timeout,args) : null;
