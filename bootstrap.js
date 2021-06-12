@@ -25,7 +25,6 @@ function formatZeroDigits(number, numDigits) {
     if ( zeroes > 0 ) { return "0".repeat(zeroes)+number }
     else { return number.toString() }
 }
-
 function setCookie(cname, cvalue, exdays) {
     var d = new Date();
     d.setTime(d.getTime() + (exdays*24*60*60*1000));
