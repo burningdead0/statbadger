@@ -7,8 +7,8 @@
 // @match        https://www.crownofthegods.com/home/
 // @icon
 // @grant        none
-// @updateURL https://raw.githubusercontent.com/burningdead0/cotg/master/bootstrap_get_stats.js
-// @downloadURL https://raw.githubusercontent.com/burningdead0/cotg/master/bootstrap_get_stats.js
+// @updateURL https://raw.githubusercontent.com/burningdead0/statbadger/master/bootstrap_get_stats.js
+// @downloadURL https://raw.githubusercontent.com/burningdead0/statbadger/master/bootstrap_get_stats.js
 // ==/UserScript==
 
 (function() {
