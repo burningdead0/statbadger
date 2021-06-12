@@ -256,10 +256,8 @@ function format(fmt, ...args) {
 //
 // download a text file
 //
-function download(elementId, filename, textInput) {
-    var element = document.getElementById(elementId);
-    if ( !element ) element = document.createElement('a');
-    element.id = elementId;
+function download(filename, textInput) {    
+    document.createElement('a');    
     element.setAttribute('href','data:text/plain;charset=utf-8, ' + encodeURIComponent(textInput));
     element.setAttribute('download', filename);
     document.body.appendChild(element);
@@ -303,7 +301,7 @@ function allianceStatsToCsv()
     let csvFilename = format("cotg_player_stats_{0}-{1}-{2}.txt",today.getFullYear(),
                                                                  formatZeroDigits(today.getMonth()+1,2),
                                                                  formatZeroDigits(today.getDate(),2));
-    download("allianceStatsDownload", csvFilename, output);
+    download(csvFilename, output);
 }
 
 //
