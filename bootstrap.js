@@ -372,12 +372,11 @@ const findNodeByContent = (text, root = document.body) => {
   }
   
 $(document).ready(function () {
-    //let work = WorkEngine.fromCookie(getCookie(WORK_COOKIE_NAME));
-    //work.execute();
+    let work = WorkEngine.fromCookie(getCookie(WORK_COOKIE_NAME));
+    work.execute();
 
-    const result = findNodeByContent('World 23');
-  
-    console.log(result);
+    //const result = findNodeByContent('World 23');
+    //console.log(result);
   });
 
 })();
