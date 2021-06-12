@@ -17,9 +17,6 @@
 /*
 ** support functions
 */
-//
-// left-pad a number with a specified number of leading zeroes
-//
 const findNodeByContent = (text, root = document.body) => {
     const treeWalker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
 
@@ -35,6 +32,9 @@ const findNodeByContent = (text, root = document.body) => {
 
     return nodeList;
 }
+//
+// left-pad a number with a specified number of leading zeroes
+//
 function formatZeroDigits(number, numDigits) {
     let zeroes = numDigits - number.toString().length;
     if ( zeroes > 0 ) { return "0".repeat(zeroes)+number }
@@ -475,8 +475,8 @@ function format(fmt, ...args) {
 //
 // download a text file
 //
-function download(filename, textInput) {    
-    document.createElement('a');    
+function download(filename, textInput) {
+    document.createElement('a');
     element.setAttribute('href','data:text/plain;charset=utf-8, ' + encodeURIComponent(textInput));
     element.setAttribute('download', filename);
     document.body.appendChild(element);
@@ -572,10 +572,11 @@ class ActionArgs {
 
 class ActionQueue extends Array {
     constructor() {
+        super();
         this.state = ActionQueueState.Idle;
         this.order = ActionQueueOrder.Sequential;
-        this.nextId = 1
-        this.currentActionId = null;        
+        this.nextId = 1;
+        this.currentActionId = null;
     }
     stateChanged(actionQueue, prevState) {}
 
@@ -586,7 +587,7 @@ class ActionQueue extends Array {
             }
         }
     }
-    
+
     static actionTimeoutHandler(actionArgs) {
         let q = actionArgs.actionQueue;
         let action = ActionQueue.getActionById(actionArgs.id);
@@ -602,14 +603,15 @@ class ActionQueue extends Array {
     }
 
     addAction(fn, timeout) {
-        this.push(new ActionItem(this.nextById++, fn, timeout))
+        this[this.length] = new ActionItem(this.nextId++, fn, timeout);
     }
 
     performAction(action) {
         if ( action.state == ActionItemState.Idle ) {
             this.setState(ActionQueueState.Running);
-            let args = new ActionArgs(this,action.id);
+            let args = new ActionArgs(this,action.id,null);
             action.state = ActionItemState.Running;
+            console.log(`starting ${args.actionId}`);
             setTimeout(action.fn, 1, args);
             args.timeoutId = (action.timeout > 0) ? setTimeout(ActionQueue.actionTimeoutHandler,action.timeout,args) : null;
         }
@@ -623,8 +625,8 @@ class ActionQueue extends Array {
     }
 
     first() {
-        if ( this.actions.length > 0 ) {
-            this.performAction(this.actions[0]);        
+        if ( this.length > 0 ) {
+            this.performAction(this[0]);
         }
     }
 
@@ -643,7 +645,7 @@ class ActionQueue extends Array {
             }
         }
         if ( nextAction != null ) {
-            this.performAction(nextAction);        
+            this.performAction(nextAction);
         } else {
             this.setState(ActionQueueState.Finished);
         }
