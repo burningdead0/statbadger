@@ -576,7 +576,7 @@ class ActionQueue extends Array {
         this.nextId = 1
         this.currentActionId = null;        
     }
-    stateChanged(currState, prevState) {}
+    stateChanged(actionQueue, prevState) {}
 
     static getActionById(id) {
         for ( var i = 0; i < this.length; ++i ) {
@@ -597,7 +597,7 @@ class ActionQueue extends Array {
     setState(state) {
         let from = this.state;
         this.state = state;
-        this.stateChanged(this.state, from);
+        this.stateChanged(this, from);
     }
 
     addAction(fn, timeout) {
@@ -633,8 +633,11 @@ class ActionQueue extends Array {
         let nextAction = null;
         for ( var i = 0; i < this.length-1; ++i ) {
             if ( this[i].id == actionArgs.actionId ) {
-                this.finishAction(this[i]);
-                nextAction = this[++i];
+                if ( this[i].state == ActionItemState.Running ) {
+                    this[i].state = ActionItemState.Finished;
+                    this.finishAction(this[i]);
+                    nextAction = this[++i];
+                }
                 break;
             }
         }
@@ -661,12 +664,17 @@ function callback3(o) {
     o.next();
 }
 
+function aq_state_changed() {
+
+}
+
 $(document).ready(function () {
-    var we = new workEngine();
-    we.addAction(callback1);
-    we.addAction(callback2);
-    we.addAction(callback3);
-    we.first();
+    let aq = new ActionQueue();
+    aq.stateChanged = function(q, prevState) { console.log(`queue state = ${q.state}`) };
+    aq.addAction(callback1);
+    aq.addAction(callback2);
+    aq.addAction(callback3);
+    aq.first();
 
     var copyStatsBtn="<button id='getMemberStats' style='right: 35.6%; margin-top: 5px;width: 150px;height: 30px !important; font-size: 12px !important; position: absolute;' class='regButton greenb'>Copy Stats</button>";
     var rankingsDivTitle = $("#rankingsPopUpBox > .ppbwincontent > .popUpBar");
