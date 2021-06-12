@@ -52,8 +52,8 @@ function getCookie(cname) {
 */
 //start of time, window to try (hours) andmaximum tries
 const WorkConfig = {
-    WorldsInUse: [23],
-    StartTime: {hour: 18, min: 0, sec: 0},
+    WorldsInUse: [21,22,23],
+    StartTime: {hour: 21, min: 0, sec: 0},
     NumHours: 5,
     MaxTries: 5
 }; Object.freeze(WorkConfig);
@@ -101,7 +101,7 @@ class Timestamp extends Date {
         console.log("Timestamp.fromString("+timestamp+")");
         let match = timestamp.match(/^(\d{4})\-(\d{2})\-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/);
         if ( match == null ) { throw "Invalid timestamp format." }
-        return new Timestamp(match[1],match[2],match[3],match[4],match[5],match[6])
+        return new Timestamp(match[1],match[2]-1,match[3],match[4],match[5],match[6])
     }
 
     toString() {
@@ -131,7 +131,7 @@ class WorldInfo {
     constructor(worldNumber, state, lastRun, tries) {
         this.worldNumber = worldNumber;
         this.state = (state !== undefined) ? state : WorldState.Ready;
-        this.lastRun = (lastRun !== undefined) ? lastRun : Timestamp.fromString(LAST_RUN_NEVER);
+        this.lastRun = (lastRun !== undefined) ? Timestamp.fromString(lastRun) : Timestamp.fromString(LAST_RUN_NEVER);
         this.tries = (tries !== undefined) ? tries : NOT_TRIED;
     }
 }
@@ -237,7 +237,7 @@ class WorkEngine {
     }
 
     static fromCookie(cookie) {
-        let match = cookie.match(/^\w+,[\d:\- ]+$/);
+        let match = cookie.match(/(\w+),([\d:\- ]+)$/);
         if ( match != null ) {
             return new WorkEngine(match[1],match[2])
         } else {
@@ -254,7 +254,10 @@ class WorkEngine {
         let me = this;
         let worlds = this.worlds;
 
-        console.log(this.lastRun.toString());
+        this.lastRun = new Timestamp(LAST_RUN_NEVER);
+        alert(this.lastRun);
+
+        console.log(this.lastRun.toString()+ " :: " + this.state);
         console.log(this.startTime.toString());
         console.log(this.minTime.toString());
         console.log(this.maxTime.toString());
@@ -262,7 +265,7 @@ class WorkEngine {
         if ( (this.startTime >= this.minTime) && (this.startTime <= this.maxTime) ) {
             //reset state of
             if ( this.lastRun < this.minTime ) {
-                this.lastRun = this.startTime;
+                this.lastRun.setTime(this.startTime);
                 this.state = WorkState.Ready;
                 setCookie(WORK_COOKIE_NAME, this.toCookie(), 365)
                 console.log(WORK_COOKIE_NAME + "=" + this.toCookie());
@@ -270,10 +273,15 @@ class WorkEngine {
 
             if ( this.state != WorkState.Finished ) {
                 //reset state of worlds that were run prior to today
-                worlds.filter(world => (world.lastRun < this.minTime)).forEach( function(world) {
-                    world.state = WorldState.Ready;
-                    world.lastRun = me.startTime;
-                });
+                for ( var i = 0; i < worlds.length; ++i ) {
+                    var w = worlds[i];
+                    alert(`before ${w.worldNumber} ${w.state} ${typeof w.lastRun}.${typeof me.minTime} ${w.lastRun} > ${me.minTime}`);
+                    if ( w.lastRun.getTime() < me.minTime.getTime() ) {
+                        w.state = WorldState.Ready;
+                        w.lastRun = new Timestamp();
+                        alert(`after ${worlds[i].worldNumber} ${worlds[i].state} ${worlds[i].lastRun}`);
+                    }
+                }
 
                 // first see if there is a running world and if it has exceeded tries
                 let world = worlds.getFirstByState(WorldState.Running);
@@ -296,10 +304,14 @@ class WorkEngine {
 
                 if ( world !== undefined ) {
                     // select world in carousel
-                    HomeUi.selectWorld(world.worldNumber,function(ws,wn,result) { 
+                    HomeUi.selectWorld(worlds,world.worldNumber,function(ws,wn,result) {
                         if ( result ) {
+                            alert("play " +wn);
+                            ws.getWorldByNumber(wn).state = WorldState.Finished;
+                            setCookie(WORLD_COOKIE_NAME,ws.toCookie(),365);
                             HomeUi.playSelectedWorld();
                         } else {
+                            alert("failed " & wn);
                             ws.getWorldByNumber(wn).state = WorldState.Failed;
                             setCookie(WORLD_COOKIE_NAME,ws.toCookie(),365);
                             window.location.reload()
@@ -308,7 +320,7 @@ class WorkEngine {
                 } else {
                     this.state = WorkState.Finished;
                     setCookie(WORK_COOKIE_NAME, this.toCookie(),365)
-                    window.location.reload()
+                    //download finished file
                 }
            }
          } else {
@@ -317,39 +329,56 @@ class WorkEngine {
     }
 }
 
-static class HomeUi {
-    static getSelectedWorldNumber() { parseInt(document.getElementById("selwrld").innerText.match(/^\w+ (\d+)$/)[1]) }
+class HomeUi {
+    static getSelectedWorldNumber() { return parseInt(document.getElementById("selwrld").innerText.match(/^\w+ (\d+)$/)[1]) }
     static moveNextWorld() { document.getElementById("roundaboutcont").carousel.next() }
     static movePrevWorld() { document.getElementById("roundaboutcont").carousel.prev() }
-    static playSelectedWorld() { document.getElementById("#playthswrld").click(); }
+    static playSelectedWorld() { document.getElementById("playthswrld").click(); }
     static selectWorld(worlds, worldNumber, fnResult, direction, previousIndex) {
         let left = true;
         let right = !left;
 
         //get reference to the carousel
         let car = document.getElementById("roundaboutcont").carousel;
-        
+
         //
         // if the currently selected world in the carousel matches worldNumber, success
         // if the currently select world is greater than worldNumber, try and move the carousel to prev
         // if the currently select world is lesser than worldNumber, try and move the carousel to next
         //
-        let currWorld = getSelectedWorldNumber();
+        let currWorld = HomeUi.getSelectedWorldNumber();
+        console.log("****");
+        console.log(worldNumber);
+        console.log(currWorld);
+        console.log(previousIndex);
+        console.log(car.current);
+        console.log("****");
+
         if ( currWorld == worldNumber ) {
+            alert("found world "+worldNumber);
+
+            console.log("found world "+worldNumber);
             fnResult(worlds, worldNumber, true);
         } else if ( currWorld > worldNumber ) {
             if ( (previousIndex !== car.current) && (direction === undefined || direction == left) ) {
+                alert("moving left "+worldNumber);
+
                 previousIndex = car.current;
                 car.prev();
-                setTimeout(HomeUi.selectWorld, 2000, worlds, worldNumber, fnResult, left, previousIndex)
+                setTimeout(HomeUi.selectWorld, Math.floor(Math.random() * 1000)+2000, worlds, worldNumber, fnResult, left, previousIndex)
             } else {
+                alert("failed moving left "+worldNumber);
                 fnResult(worlds, worldNumber,false);
             }
-        } else if ( (previousIndex !== car.current) && (direction === undefined || direction == right)  ) {
+        } else if ( (previousIndex !== car.current) && (direction === undefined || direction == right) ) {
+            alert("moving right "+worldNumber);
+
             previousIndex = car.current;
             car.next();
-            setTimeout(HomeUi.selectWorld, 2000, worlds, worldNumber, fnResult, right, previousIndex)
+            setTimeout(HomeUi.selectWorld, Math.floor(Math.random() * 1000)+2000, worlds, worldNumber, fnResult, right, previousIndex)
         } else {
+            alert("failed moving right "+worldNumber);
+
             fnResult(worlds, worldNumber, false);
         }
     }
@@ -357,23 +386,25 @@ static class HomeUi {
 
 const findNodeByContent = (text, root = document.body) => {
     const treeWalker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-  
+
     const nodeList = [];
-  
+
     while (treeWalker.nextNode()) {
       const node = treeWalker.currentNode;
-  
+
       if (node.nodeType === Node.TEXT_NODE && node.textContent.includes(text)) {
         nodeList.push(node.parentNode);
       }
     };
-  
+
     return nodeList;
   }
-  
+
 $(document).ready(function () {
-    let work = WorkEngine.fromCookie(getCookie(WORK_COOKIE_NAME));
-    work.execute();
+    setTimeout(function(){
+        let work = WorkEngine.fromCookie(getCookie(WORK_COOKIE_NAME));
+        work.execute();
+    },Math.floor(Math.random() * 2000)+4000);
 
     //const result = findNodeByContent('World 23');
     //console.log(result);
