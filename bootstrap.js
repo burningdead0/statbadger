@@ -313,10 +313,41 @@ class WorkEngine {
 */
 function playSelectedWorld() { document.getElementById("#playthswrld").click(); }
 
+function getTextValue(obj)
+{
+    if ( obj.textContent ) {
+        return obj.textContent;
+    } else if ( obj.innerText ) {
+        return obj.innerText;
+    } else if ( obj.innerHTML ) {
+        return obj.innerHTML;
+    }
+    return '';
+}
 
+const findNodeByContent = (text, root = document.body) => {
+    const treeWalker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  
+    const nodeList = [];
+  
+    while (treeWalker.nextNode()) {
+      const node = treeWalker.currentNode;
+  
+      if (node.nodeType === Node.TEXT_NODE && node.textContent.includes(text)) {
+        nodeList.push(node.parentNode);
+      }
+    };
+  
+    return nodeList;
+  }
+  
 $(document).ready(function () {
-    let work = WorkEngine.fromCookie(getCookie(WORK_COOKIE_NAME));
-    work.execute();
-});
+    //let work = WorkEngine.fromCookie(getCookie(WORK_COOKIE_NAME));
+    //work.execute();
+
+    const result = findNodeByContent('World 23');
+  
+    console.log(result);
+  });
 
 })();
