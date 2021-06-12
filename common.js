@@ -1,4 +1,7 @@
 //[common]
+(function () {
+    'use strict';
+
 /*
 ** support functions
 */
@@ -211,4 +214,5 @@ class Worlds extends Array {
         }
     }
 }
+})();
 //[/common]
