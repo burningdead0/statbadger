@@ -204,6 +204,12 @@ class Worlds extends Array {
         }
         return undefined
     }
+
+    getWorldByNumber(worldNumber) {
+        for ( var i = 0; i < this.length; ++i ) {
+            if ( this[i].worldNumber == worldNumber ) { return this[i] }
+        }
+    }
 }
 
 class WorkEngine {
@@ -290,16 +296,19 @@ class WorkEngine {
 
                 if ( world !== undefined ) {
                     // select world in carousel
-                    //... todo
-
-                    // play world
-                    //playSelectedWorld();
-                    world.state = WorldState.Finished;
-                    setCookie(WORLD_COOKIE_NAME,worlds.toCookie(),365);
-
+                    HomeUi.selectWorld(world.worldNumber,function(ws,wn,result) { 
+                        if ( result ) {
+                            HomeUi.playSelectedWorld();
+                        } else {
+                            ws.getWorldByNumber(wn).state = WorldState.Failed;
+                            setCookie(WORLD_COOKIE_NAME,ws.toCookie(),365);
+                            window.location.reload()
+                        }
+                    });
                 } else {
                     this.state = WorkState.Finished;
                     setCookie(WORK_COOKIE_NAME, this.toCookie(),365)
+                    window.location.reload()
                 }
            }
          } else {
@@ -308,21 +317,42 @@ class WorkEngine {
     }
 }
 
-/*
-** Determine
-*/
-function playSelectedWorld() { document.getElementById("#playthswrld").click(); }
+static class HomeUi {
+    static getSelectedWorldNumber() { parseInt(document.getElementById("selwrld").innerText.match(/^\w+ (\d+)$/)[1]) }
+    static moveNextWorld() { document.getElementById("roundaboutcont").carousel.next() }
+    static movePrevWorld() { document.getElementById("roundaboutcont").carousel.prev() }
+    static playSelectedWorld() { document.getElementById("#playthswrld").click(); }
+    static selectWorld(worlds, worldNumber, fnResult, direction, previousIndex) {
+        let left = true;
+        let right = !left;
 
-function getTextValue(obj)
-{
-    if ( obj.textContent ) {
-        return obj.textContent;
-    } else if ( obj.innerText ) {
-        return obj.innerText;
-    } else if ( obj.innerHTML ) {
-        return obj.innerHTML;
+        //get reference to the carousel
+        let car = document.getElementById("roundaboutcont").carousel;
+        
+        //
+        // if the currently selected world in the carousel matches worldNumber, success
+        // if the currently select world is greater than worldNumber, try and move the carousel to prev
+        // if the currently select world is lesser than worldNumber, try and move the carousel to next
+        //
+        let currWorld = getSelectedWorldNumber();
+        if ( currWorld == worldNumber ) {
+            fnResult(worlds, worldNumber, true);
+        } else if ( currWorld > worldNumber ) {
+            if ( (previousIndex !== car.current) && (direction === undefined || direction == left) ) {
+                previousIndex = car.current;
+                car.prev();
+                setTimeout(HomeUi.selectWorld, 2000, worlds, worldNumber, fnResult, left, previousIndex)
+            } else {
+                fnResult(worlds, worldNumber,false);
+            }
+        } else if ( (previousIndex !== car.current) && (direction === undefined || direction == right)  ) {
+            previousIndex = car.current;
+            car.next();
+            setTimeout(HomeUi.selectWorld, 2000, worlds, worldNumber, fnResult, right, previousIndex)
+        } else {
+            fnResult(worlds, worldNumber, false);
+        }
     }
-    return '';
 }
 
 const findNodeByContent = (text, root = document.body) => {
