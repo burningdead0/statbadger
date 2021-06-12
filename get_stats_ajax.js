@@ -11,12 +11,6 @@
 // @downloadURL https://raw.githubusercontent.com/burningdead0/statbadger/master/get_stats_axaj.js
 // ==/UserScript==
 //[common]
-(function () {
-    'use strict';
-
-/*
-** support functions
-*/
 const findNodeByContent = (text, root = document.body) => {
     const treeWalker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
 
@@ -32,6 +26,12 @@ const findNodeByContent = (text, root = document.body) => {
 
     return nodeList;
 }
+(function () {
+    'use strict';
+
+/*
+** support functions
+*/
 //
 // left-pad a number with a specified number of leading zeroes
 //
